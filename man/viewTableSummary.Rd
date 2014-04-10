@@ -1,0 +1,46 @@
+\name{viewTableSummary}
+\alias{viewTableSummary}
+\title{Invoke a Data Viewer on table statistics.}
+\usage{
+  viewTableSummary(tableInfo, types = NULL, include = NULL,
+    except = NULL, basic = FALSE, percentiles = FALSE)
+}
+\arguments{
+  \item{tableInfo}{data frame with columns statistics to
+  display.}
+
+  \item{types}{vector with types of columns to include:
+  numerical (\code{"numeric"}), character
+  (\code{"character"} or date/time (\code{"temporal"})}
+
+  \item{include}{a vector of column names to include.
+  Output never contains attributes other than in the list.}
+
+  \item{except}{a vector of column names to exclude. Output
+  never contains attributes from the list.}
+
+  \item{basic}{logical: if TRUE display minimum, maximum,
+  average, deviation and mode (if present)}
+
+  \item{percentiles}{logical: if TRUE display percentiles}
+}
+\description{
+  view computed column statistics in a spreadsheet-style
+  viewer in R.
+}
+\details{
+  When both parameters \code{basic} and \code{percentiles}
+  are FALSE view displays \emph{all} statistics.
+}
+\examples{
+\donttest{
+pitchingInfo = getTableSummary(channel=conn, 'pitching_enh')
+viewTableSummary(pitchingInfo, percentiles=TRUE)
+
+viewTableSummary(pitchingInfo, types=c("numeric", "temporal"))
+}
+}
+\seealso{
+  \code{\link{getTableSummary}}
+}
+

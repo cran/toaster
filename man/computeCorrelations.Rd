@@ -1,0 +1,72 @@
+\name{computeCorrelations}
+\alias{computeCorrelations}
+\title{Compute correlation between pairs of columns.}
+\usage{
+  computeCorrelations(channel, tableName, tableInfo,
+    include, except = NULL, where = NULL, test = FALSE)
+}
+\arguments{
+  \item{channel}{connection object as returned by
+  \code{\link{odbcConnect}}}
+
+  \item{tableName}{database table name}
+
+  \item{tableInfo}{pre-built summary of data to use (must
+  have with \code{test=TRUE})}
+
+  \item{include}{a vector of column names to include.
+  Output never contains attributes other than in the list.}
+
+  \item{except}{a vector of column names to exclude. Output
+  never contains attributes from the list.}
+
+  \item{where}{specifies criteria to satisfy by the table
+  rows before applying computation. The creteria are
+  expressed in the form of SQL predicates (inside
+  \code{WHERE} clause).}
+
+  \item{test}{logical: if TRUE show what would be done,
+  only (similar to parameter \code{test} in \link{RODBC}
+  functions like \link{sqlQuery} and \link{sqlSave}).}
+}
+\value{
+  data frame with columns: \itemize{ \item \emph{corr} pair
+  of 1st and 2d columns \code{"column1:column2"} \item
+  \emph{value} computed correlation value \item
+  \emph{metric1} name of 1st column \item \emph{metric2}
+  name of 2d column \item \emph{sign} correlation value
+  sign \code{sign(value)} (-1, 0, or 1) } Note that while
+  number of correlations function computes is
+  \code{choose(N, 2)}, where \code{N} is number of table
+  columns specified, resulting data frame contains twice as
+  many rows by duplicating each correlation value with
+  swaped column names (1st column to 2d and 2d to 1st
+  positions). This makes resulting data frame symmetrical
+  with respect to column order in pairs and is necessary to
+  correctly visualize correlation matrix with
+  \code{\link{createBubblechart}}.
+}
+\description{
+  Compute global correlation between all pairs of numeric
+  columns in table. Result includes all pairwise
+  combinations of numeric columns in the table, with
+  optionally limiting columns to those in the parameter
+  \code{include} or/and excluding columns defined by
+  parameter \code{except}. Limit computation on the table
+  subset defined with \code{where}.
+}
+\examples{
+\donttest{
+cormat = computeCorrelations(channel=conn, "pitching_enh", sqlColumns(conn, "pitching_enh"),
+                             include = c('w','l','cg','sho','sv','ipouts','h','er','hr','bb',
+                                         'so','baopp','era','whip','ktobb','fip'),
+                             where = "decadeid = 2000", test=FALSE)
+# remove duplicate correlation values (no symmetry)
+cormat = cormat[cormat$metric1 < cormat$metric2, ]
+}
+}
+\seealso{
+  \code{\link{createBubblechart}} and
+  \code{\link{showData}}.
+}
+
