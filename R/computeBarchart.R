@@ -35,7 +35,11 @@
 #' @seealso \code{\link{computeHistogram}}, \code{\link{createHistogram}}
 #' 
 #' @examples
-#' \donttest{
+#' if(interactive()){
+#' # initialize connection to Lahman baseball database in Aster 
+#' conn = odbcDriverConnect(connection="driver={Aster ODBC Driver};
+#'                          server=<dbhost>;port=2406;database=<dbname>;uid=<user>;pwd=<pw>")
+#' 
 #' # Compute average team season era, walks, and hits for each decade starting with 1980
 #' computeBarchart(channel=conn, "teams_enh", "teamid team", 
 #'                 aggregates=c("avg(era) era", "avg(bb) bb", "avg(h) h"), 
@@ -98,7 +102,7 @@ computeBarchart <- function(channel, tableName, category,
   if (test) {
     return(sql)
   }else {
-    df = sqlQuery(channel, sql, stringsAsFactors=stringsAsFactors)
+    df = toaSqlQuery(channel, sql, stringsAsFactors=stringsAsFactors)
     
     if (withMelt) {
       df = melt(df, id.vars=c(category, by))

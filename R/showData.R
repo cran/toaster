@@ -81,7 +81,11 @@
 #' @return A ggplot visual object.
 #' @export
 #' @examples
-#' \donttest{
+#' if(interactive()){
+#' # initialize connection to Lahman baseball database in Aster 
+#' conn = odbcDriverConnect(connection="driver={Aster ODBC Driver};
+#'                          server=<dbhost>;port=2406;database=<dbname>;uid=<user>;pwd=<pw>")
+#' 
 #' # get summaries to save time
 #' pitchingInfo = getTableSummary(conn, 'pitching_enh')
 #' battingInfo = getTableSummary(conn, 'batting_enh')
@@ -188,6 +192,8 @@ showData <- function(channel = NULL, tableName = NULL, tableInfo = NULL,
   if (missing(tableInfo) && test) {
     stop("Must provide tableInfo when test==TRUE.")
   }
+  
+  tableName = normalizeTableName(tableName)
       
   if (missing(tableInfo)) {
     summary = getTableSummary(channel, tableName, include=include, except=except, where=where)
@@ -200,16 +206,16 @@ showData <- function(channel = NULL, tableName = NULL, tableInfo = NULL,
     if (!is.null(except)) {
       include = setdiff(include, except)
     }
-    if (any(!(include %in% summary$COLUMN_NAME))) {
+    if (!all(include %in% summary$COLUMN_NAME)) {
       stop(paste("Not all specified columns are in the table summary (tableInfo):", include[!(include %in% summary$COLUMN_NAME)]))
     }
   }
   
   dataNum = getNumericColumns(summary, names.only=FALSE)
   dataChar = getCharacterColumns(summary, names.only=FALSE)
-  dataTemp = getDateTimeColumns(summary, names.only=FALSE)
+  dataTemp = getTemporalColumns(summary, names.only=FALSE)
   
-  getPalette = colorRampPalette(brewer.pal(brewer.pal.info[paletteName,"maxcolors"], paletteName))
+  getPalette = getDiscretePaletteFactory(paletteName)
   
   if (format=='boxplot') {
     if (type != 'numeric') {
@@ -259,9 +265,13 @@ showData <- function(channel = NULL, tableName = NULL, tableInfo = NULL,
     corrLabelName = list('none', 'valuePretty', 'corr')[match(corrLabel, c('none','value','pair'))]
     p = createBubblechart(corrmat, "metric1", "metric2", "value", label=corrLabelName, fill="sign",
                           shape=shape, shapeSizeRange=shapeSizeRange, labelSize=5, labelVJust=0,
-                          title=title, 
-                          defaultTheme=defaultTheme,
+                          title=title, legendPosition=legendPosition,
+                          defaultTheme=defaultTheme, 
                           themeExtra=theme(axis.title = element_blank()))
+    
+    # remove fill legend 
+    if (legendPosition == "none") 
+      p = p + guides(fill = FALSE)
     
     # force parameter facet to FALSE
     facet = FALSE
@@ -289,7 +299,12 @@ showData <- function(channel = NULL, tableName = NULL, tableInfo = NULL,
                           title=title, xlab="Bins", ylab="Frequency",
                           paletteValues = getPalette(length(unique(all_hist$COLUMN_NAME))),
                           legendPosition=legendPosition,
-                          defaultTheme=defaultTheme, themeExtra=themeExtra)
+                          defaultTheme=defaultTheme, 
+                          themeExtra=themeExtra)
+      
+      # remove fill legend 
+      if (legendPosition == "none") 
+        p = p + guides(fill = FALSE)
       
       # force parameter facet to FALSE
       facet = FALSE
@@ -307,7 +322,7 @@ showData <- function(channel = NULL, tableName = NULL, tableInfo = NULL,
     if (missing(include) | length(include)<2) {
       stop("Scatterplot format requires parameter 'include' define x and y coordiantes.")
     }
-    if (any(!(include[1:2] %in% dataNum$COLUMN_NAME))) {
+    if (!all(include[1:2] %in% dataNum$COLUMN_NAME)) {
       stop("Scatterplot format is valid for numerical data only.")
     }
     
@@ -336,28 +351,34 @@ showData <- function(channel = NULL, tableName = NULL, tableInfo = NULL,
       theme(legend.position=legendPosition) 
     
     if (regressionLine) {
-      p = p + geom_smooth(method=lm)
+      p = p + geom_smooth(method="lm")
     }
     
     if (!missing(facetName) & length(facetName)>0) {
       if (length(facetName)==1) {
-        p = p + facet_wrap(as.formula(paste("~", facetName)), ncol=ncol, scales=scales)
+        p = p + facet_wrap(stats::as.formula(paste("~", facetName)), ncol=ncol, scales=scales)
       }else {
-        p = p + facet_grid(as.formula(paste(facetName[[1]],"~",facetName[[2]])), scales=scales)
+        p = p + facet_grid(stats::as.formula(paste(facetName[[1]],"~",facetName[[2]])), scales=scales)
       }
       
     }
     
+    # remove colour legend 
+    if (legendPosition == "none") 
+      p = p + guides(colour = FALSE)
+    else 
+      p = p + guides(colour = guide_legend())
+    
     facet = FALSE
   }
   else if (format=='overview') {
-    if (type=='character' & missing(measures)) {
+    if (type=='character' && missing(measures)) {
       measures = c('distinct_count', 'not_null_count', 'null_count')
     }
-    else if (type=='numeric' & missing(measures)) {
+    else if (type=='numeric' && missing(measures)) {
       measures = c('distinct_count','not_null_count','null_count',
                    'maximum','minimum','average','deviation',
-                   '0%','10%','25%','50%','75%','90%','100%','IQR')
+                   '25%','50%','75%','IQR')
     }
     
     if (type=='character') 
@@ -372,6 +393,10 @@ showData <- function(channel = NULL, tableName = NULL, tableInfo = NULL,
       scale_fill_manual(values = getPalette(nrow(data))) +
       facet_wrap(~variable, ncol=1, scales=scales) +
       labs(title=title, x='Columns')
+    
+    # remove fill legend 
+    if (legendPosition == "none") 
+      p = p + guides(fill = FALSE)
     
     # force facet to FALSE
     facet = FALSE
