@@ -1,7 +1,7 @@
 Package: toaster
 Type: Package
 Title: Big Data in-Database Analytics with Teradata Aster
-Version: 0.4.1
+Version: 0.4.2
 Authors@R: c(
     person("Gregory", "Kanevsky", , "gregory.kanevsky@teradata.com", c("aut","cre")),
     person("Nick", "Switanek", , "nicholas.switanek@teradata.com", "aut")
@@ -35,9 +35,9 @@ Collate: 'toaster.R' 'misc.R' 'utils.R' 'tools.R'
         'plottingKmeans.R'
 RoxygenNote: 5.0.1
 NeedsCompilation: no
-Packaged: 2015-12-23 05:00:54 UTC; gk186006
+Packaged: 2016-01-22 05:41:32 UTC; gk186006
 Author: Gregory Kanevsky [aut, cre],
   Nick Switanek [aut]
 Maintainer: Gregory Kanevsky <gregory.kanevsky@teradata.com>
 Repository: CRAN
-Date/Publication: 2015-12-23 06:58:07
+Date/Publication: 2016-01-22 10:26:58
